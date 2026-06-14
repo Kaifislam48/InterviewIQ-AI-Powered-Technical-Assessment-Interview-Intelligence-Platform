@@ -29,8 +29,19 @@ const submitChallenge = async (userId, challengeId, code, language) => {
     throw new BadRequestError('Code submission cannot be empty');
   }
 
-  // 1. Run user code in the VM
-  const runResult = runTestCases(code, challenge.title, challenge.testCases, language);
+  // 1. Run user code (JavaScript in VM sandbox, others evaluated by AI)
+  let runResult;
+  if (language === 'javascript') {
+    runResult = runTestCases(code, challenge.title, challenge.testCases, language);
+  } else {
+    runResult = await geminiService.evaluateCode(
+      challenge.title,
+      challenge.description,
+      challenge.testCases,
+      code,
+      language
+    );
+  }
 
   // 2. Save submission details to db
   const submission = await codingSubmissionRepository.create({

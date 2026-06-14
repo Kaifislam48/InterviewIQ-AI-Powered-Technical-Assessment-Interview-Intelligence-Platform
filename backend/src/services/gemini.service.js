@@ -276,10 +276,83 @@ const generateCodingHint = async (problemStatement, currentCode, language) => {
   }
 };
 
+const evaluateCode = async (challengeTitle, challengeDescription, testCases, userCode, language) => {
+  const isStarter = 
+    userCode.includes('// Write your') || 
+    userCode.includes('# Write your') || 
+    userCode.includes('// Write starter') ||
+    userCode.includes('// Write code') ||
+    userCode.includes('pass') || 
+    userCode.trim().length < 50;
+
+  if (isStarter) {
+    return {
+      status: 'Failed',
+      testCasesPassed: 0,
+      totalTestCases: testCases.length,
+      logs: 'Compilation Error: Empty or unmodified starter code. Please write your solution before running.'
+    };
+  }
+
+  if (isMockActive()) {
+    logger.info(`Using mock code runner for ${language}`);
+    return {
+      status: 'Passed',
+      testCasesPassed: testCases.length,
+      totalTestCases: testCases.length,
+      logs: `[Mock Compilation Success]\n${language.toUpperCase()} test assertions passed. All test cases passed.`
+    };
+  }
+
+  try {
+    const prompt = `
+      You are an automated code evaluator. You are testing a student's solution to a coding challenge.
+      
+      Challenge Title: "${challengeTitle}"
+      Challenge Description:
+      "${challengeDescription}"
+      
+      Programming Language: "${language}"
+      Student's Code:
+      \`\`\`${language}
+      ${userCode}
+      \`\`\`
+      
+      Test Cases to run:
+      ${JSON.stringify(testCases, null, 2)}
+      
+      Evaluate the student's solution. Determine:
+      1. If there are syntax or logic errors.
+      2. How many test cases compile and pass.
+      
+      Output MUST be a valid JSON object matching this structure EXACTLY:
+      {
+        "status": "Passed" or "Failed" or "Compilation Error",
+        "testCasesPassed": Number (integer, how many test cases passed),
+        "totalTestCases": ${testCases.length},
+        "logs": "Detailed compilation and assertion run logs."
+      }
+    `;
+
+    const result = await generateContentWithFallback(prompt);
+    const text = result.response.text();
+    return cleanAndParseJson(text);
+  } catch (error) {
+    logger.error(`Error in Gemini evaluateCode: ${error.message}`);
+    return {
+      status: 'Failed',
+      testCasesPassed: 0,
+      totalTestCases: testCases.length,
+      logs: `Evaluation Error: ${error.message}`
+    };
+  }
+};
+
 module.exports = {
   analyzeResume,
   generateQuestions,
   evaluateAnswer,
   generateLearningPlan,
   generateCodingHint,
+  evaluateCode,
 };
