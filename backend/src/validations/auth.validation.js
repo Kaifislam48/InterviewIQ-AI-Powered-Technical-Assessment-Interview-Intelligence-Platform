@@ -1,0 +1,58 @@
+const { body } = require('express-validator');
+
+const register = [
+  body('name')
+    .trim()
+    .notEmpty()
+    .withMessage('Name is required')
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Name must be between 2 and 50 characters'),
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Invalid email address')
+    .normalizeEmail(),
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters long'),
+];
+
+const login = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Invalid email address'),
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required'),
+];
+
+const forgotPassword = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Invalid email address'),
+];
+
+const resetPassword = [
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters long'),
+];
+
+module.exports = {
+  register,
+  login,
+  forgotPassword,
+  resetPassword,
+};

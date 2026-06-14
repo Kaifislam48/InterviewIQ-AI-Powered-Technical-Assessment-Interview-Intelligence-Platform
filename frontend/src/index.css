@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#0B0F19] text-[#F3F4F6] font-sans antialiased min-h-screen;
+  }
+}
+
+/* Custom UI Utility Styles */
+.glass-panel {
+  background: rgba(21, 29, 48, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-panel-hover:hover {
+  transform: translateY(-2px);
+  background: rgba(21, 29, 48, 0.85);
+  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 15px rgba(99, 102, 241, 0.1);
+}
+
+/* Glowing text and buttons */
+.text-glow {
+  text-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+.btn-glow-primary {
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.25);
+  transition: all 0.2s ease;
+}
+.btn-glow-primary:hover {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+}
+
+.btn-glow-secondary {
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.25);
+  transition: all 0.2s ease;
+}
+.btn-glow-secondary:hover {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+}
+
+/* Custom Scrollbar for modern dashboards */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0F19;
+}
+::-webkit-scrollbar-thumb {
+  background: #1F2A45;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6366F1;
+}
+
+/* Animated gradient backgrounds */
+@keyframes gradientBg {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animated-gradient {
+  background: linear-gradient(-45deg, #0B0F19, #151D30, #0B0F19, #1F2A45);
+  background-size: 400% 400%;
+  animation: gradientBg 15s ease infinite;
+}

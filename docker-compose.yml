@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: interviewiq-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - interviewiq-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: interviewiq-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/interviewiq
+      - JWT_SECRET=super_secret_jwt_key_interviewiq_32_characters_long
+      - JWT_REFRESH_SECRET=super_secret_refresh_key_interviewiq_32_characters_long
+      - GEMINI_API_KEY=mock_mode
+    depends_on:
+      - mongodb
+    networks:
+      - interviewiq-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: interviewiq-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - interviewiq-network
+
+networks:
+  interviewiq-network:
+    driver: bridge
+
+volumes:
+  mongo-data:

@@ -1,0 +1,27 @@
+const rateLimit = require('express-rate-limit');
+const { TooManyRequestsError } = require('../utils/errors');
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // Limit each IP to 200 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res, next) => {
+    next(new TooManyRequestsError());
+  },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Limit each IP to 20 requests per windowMs on auth routes
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res, next) => {
+    next(new TooManyRequestsError('Too many login attempts. Please try again after 15 minutes.'));
+  },
+});
+
+module.exports = {
+  apiLimiter,
+  authLimiter,
+};

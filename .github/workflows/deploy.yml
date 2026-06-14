@@ -1,0 +1,55 @@
+name: InterviewIQ CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    # 1. Setup Node.js environment
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    # 2. Test Backend API
+    - name: Install Backend Dependencies
+      run: |
+        cd backend
+        npm ci
+
+    - name: Run Backend Tests
+      run: |
+        cd backend
+        npm run test
+
+    # 3. Test Frontend App
+    - name: Install Frontend Dependencies
+      run: |
+        cd frontend
+        npm ci
+
+    - name: Build Frontend static files
+      run: |
+        cd frontend
+        npm run build
+
+    # 4. Validate Docker Builds
+    - name: Build Backend Docker Image
+      run: |
+        docker build -t interviewiq-backend ./backend
+
+    - name: Build Frontend Docker Image
+      run: |
+        docker build -t interviewiq-frontend ./frontend
