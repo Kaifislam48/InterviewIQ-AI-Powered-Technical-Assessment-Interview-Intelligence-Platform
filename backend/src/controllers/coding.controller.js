@@ -22,8 +22,8 @@ const getChallenge = asyncHandler(async (req, res) => {
 
 const submitCode = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { code, language } = req.body;
-  const result = await codingService.submitChallenge(req.user.id, id, code, language);
+  const { code, language, isSubmit } = req.body;
+  const result = await codingService.submitChallenge(req.user.id, id, code, language, isSubmit);
   res.status(statusCodes.OK).json({
     status: 'success',
     data: result,

@@ -10,6 +10,10 @@ const submitOrHint = [
     .withMessage('Programming language is required')
     .isIn(['javascript', 'python', 'java', 'cpp', 'go', 'rust', 'ruby', 'typescript'])
     .withMessage('Unsupported programming language option'),
+  body('isSubmit')
+    .optional()
+    .isBoolean()
+    .withMessage('isSubmit must be a boolean value'),
 ];
 
 module.exports = {

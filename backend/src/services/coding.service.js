@@ -19,7 +19,7 @@ const getChallengeById = async (id) => {
   return challenge;
 };
 
-const submitChallenge = async (userId, challengeId, code, language) => {
+const submitChallenge = async (userId, challengeId, code, language, isSubmit = false) => {
   const challenge = await codingChallengeRepository.findById(challengeId);
   if (!challenge) {
     throw new NotFoundError('Coding challenge not found');
@@ -29,37 +29,57 @@ const submitChallenge = async (userId, challengeId, code, language) => {
     throw new BadRequestError('Code submission cannot be empty');
   }
 
-  // 1. Run user code (JavaScript in VM sandbox, others evaluated by AI)
+  // 1. Differentiate between dry run (visible test cases) and official submit (all test cases)
+  const targetTestCases = isSubmit 
+    ? challenge.testCases 
+    : challenge.testCases.filter(t => !t.isHidden);
+
+  // Fallback: if no visible test cases exist, use all of them
+  const testCasesToRun = targetTestCases.length > 0 ? targetTestCases : challenge.testCases;
+
+  // 2. Run user code (JavaScript in VM sandbox, others evaluated by AI)
   let runResult;
   if (language === 'javascript') {
-    runResult = runTestCases(code, challenge.title, challenge.testCases, language);
+    runResult = runTestCases(code, challenge.title, testCasesToRun, language);
   } else {
     runResult = await geminiService.evaluateCode(
       challenge.title,
       challenge.description,
-      challenge.testCases,
+      testCasesToRun,
       code,
       language
     );
   }
 
-  // 2. Save submission details to db
-  const submission = await codingSubmissionRepository.create({
-    userId,
-    challengeId,
-    code,
-    language,
+  // 3. Save submission details to db only if it is an official submission
+  if (isSubmit) {
+    const submission = await codingSubmissionRepository.create({
+      userId,
+      challengeId,
+      code,
+      language,
+      status: runResult.status,
+      testCasesPassed: runResult.testCasesPassed,
+      totalTestCases: runResult.totalTestCases,
+    });
+
+    return {
+      submissionId: submission._id,
+      status: submission.status,
+      testCasesPassed: submission.testCasesPassed,
+      totalTestCases: submission.totalTestCases,
+      logs: runResult.logs,
+      isRunOnly: false,
+    };
+  }
+
+  // Otherwise, return logs for dry run
+  return {
     status: runResult.status,
     testCasesPassed: runResult.testCasesPassed,
     totalTestCases: runResult.totalTestCases,
-  });
-
-  return {
-    submissionId: submission._id,
-    status: submission.status,
-    testCasesPassed: submission.testCasesPassed,
-    totalTestCases: submission.totalTestCases,
     logs: runResult.logs,
+    isRunOnly: true,
   };
 };
 

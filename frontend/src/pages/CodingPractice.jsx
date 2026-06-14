@@ -25,6 +25,7 @@ export const CodingPractice = () => {
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('javascript');
   const [running, setRunning] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [runLogs, setRunLogs] = useState('');
   const [submissionStatus, setSubmissionStatus] = useState(null);
 
@@ -134,19 +135,25 @@ export const CodingPractice = () => {
     }
   };
 
-  const runCode = async (e) => {
-    e.preventDefault();
+  const executeCode = async (isSubmit) => {
     if (!code.trim()) {
       toast.error('Code sandbox is empty');
       return;
     }
 
-    setRunning(true);
-    setRunLogs('Running compilation and executing assertions in VM...');
+    if (isSubmit) {
+      setSubmitting(true);
+    } else {
+      setRunning(true);
+    }
+
+    setRunLogs(isSubmit ? 'Submitting solution and executing final assertions...' : 'Running compilation and executing visible assertions...');
+    setSubmissionStatus(null);
     try {
       const response = await api.post(`/coding/submit/${selectedChallenge._id}`, {
         code,
         language,
+        isSubmit,
       });
 
       const { status, testCasesPassed, totalTestCases, logs } = response.data.data;
@@ -154,9 +161,13 @@ export const CodingPractice = () => {
       setRunLogs(logs);
       
       if (status === 'Passed') {
-        toast.success('All assertions passed! Problem solved.');
+        if (isSubmit) {
+          toast.success('Congratulations! Your solution passed all test cases.');
+        } else {
+          toast.success('Sample test cases passed successfully!');
+        }
       } else {
-        toast.error(`Failed: Passed ${testCasesPassed}/${totalTestCases} test cases.`);
+        toast.error(`${status}: Passed ${testCasesPassed}/${totalTestCases} test cases.`);
       }
 
       // Re-fetch submissions to update checkmarks
@@ -164,10 +175,21 @@ export const CodingPractice = () => {
       setSubmissions(subRes.data.data);
     } catch (err) {
       setRunLogs(`Compilation halted: ${err.response?.data?.message || err.message}`);
-      toast.error('Code execution failed');
+      toast.error(isSubmit ? 'Submission failed' : 'Execution failed');
     } finally {
       setRunning(false);
+      setSubmitting(false);
     }
+  };
+
+  const handleRunCode = (e) => {
+    e.preventDefault();
+    executeCode(false);
+  };
+
+  const handleSubmitCode = (e) => {
+    e.preventDefault();
+    executeCode(true);
   };
 
   const getAiHint = async () => {
@@ -334,14 +356,24 @@ export const CodingPractice = () => {
                         <option value="ruby">Ruby</option>
                       </select>
                     </div>
-                    <button
-                      onClick={runCode}
-                      disabled={running}
-                      className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all btn-glow-primary disabled:opacity-50"
-                    >
-                      {running ? <Loader2 className="animate-spin h-4 w-4" /> : <Play className="h-4 w-4" />}
-                      <span>Run Code</span>
-                    </button>
+                    <div className="flex items-center space-x-3">
+                      <button
+                        onClick={handleRunCode}
+                        disabled={running || submitting}
+                        className="px-5 py-2 bg-[#1F2A45]/40 hover:bg-[#1F2A45]/80 border border-[#1F2A45] text-[#F3F4F6] text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all disabled:opacity-50"
+                      >
+                        {running ? <Loader2 className="animate-spin h-4 w-4" /> : <Play className="h-4 w-4" />}
+                        <span>Run Code</span>
+                      </button>
+                      <button
+                        onClick={handleSubmitCode}
+                        disabled={running || submitting}
+                        className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all btn-glow-primary disabled:opacity-50"
+                      >
+                        {submitting ? <Loader2 className="animate-spin h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                        <span>Submit</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
