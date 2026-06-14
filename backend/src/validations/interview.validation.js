@@ -9,7 +9,7 @@ const startInterview = [
     .trim()
     .notEmpty()
     .withMessage('Experience level is required')
-    .isIn(['entry', 'mid', 'senior', 'Entry', 'Mid', 'Senior'])
+    .isIn(['entry', 'mid', 'senior', 'Entry', 'Mid', 'Senior', 'beginner', 'intermediate', 'advanced', 'Beginner', 'Intermediate', 'Advanced'])
     .withMessage('Invalid experience level'),
   body('techStack')
     .isArray({ min: 1 })
@@ -22,7 +22,7 @@ const startInterview = [
     .trim()
     .notEmpty()
     .withMessage('Difficulty is required')
-    .isIn(['easy', 'medium', 'hard', 'Easy', 'Medium', 'Hard'])
+    .isIn(['easy', 'medium', 'hard', 'Easy', 'Medium', 'Hard', 'beginner', 'intermediate', 'advanced', 'Beginner', 'Intermediate', 'Advanced'])
     .withMessage('Invalid difficulty level'),
 ];
 

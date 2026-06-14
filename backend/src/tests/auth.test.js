@@ -6,7 +6,7 @@ const User = require('../models/User');
 describe('Authentication Endpoints', () => {
   beforeAll(async () => {
     // Connect to a test MongoDB database
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/interviewiq_test';
+    const mongoUri = process.env.TEST_MONGODB_URI || 'mongodb://localhost:27017/interviewiq_test';
     await mongoose.connect(mongoUri);
   });
 

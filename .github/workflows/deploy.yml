@@ -35,6 +35,9 @@ jobs:
         cd backend
         npm ci
 
+    - name: Wait for MongoDB
+      run: npx wait-port 27017
+
     - name: Run Backend Tests
       run: |
         cd backend

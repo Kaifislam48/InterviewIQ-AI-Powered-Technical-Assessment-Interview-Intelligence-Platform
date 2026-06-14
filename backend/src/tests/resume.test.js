@@ -7,7 +7,7 @@ describe('Resume Upload & File Filter Validation', () => {
   let token;
 
   beforeAll(async () => {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/interviewiq_test';
+    const mongoUri = process.env.TEST_MONGODB_URI || 'mongodb://localhost:27017/interviewiq_test';
     await mongoose.connect(mongoUri);
   });
 
