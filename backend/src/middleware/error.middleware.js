@@ -61,53 +61,54 @@ const sendErrorProd = (err, req, res) => {
 };
 
 module.exports = (err, req, res, next) => {
-  err.statusCode = err.statusCode || statusCodes.INTERNAL_SERVER_ERROR;
-  err.status = err.status || 'error';
+  let error = { ...err };
+  error.message = err.message;
+  error.stack = err.stack;
+  error.name = err.name;
+  error.errors = err.errors;
+  error.isOperational = err.isOperational;
+  error.statusCode = err.statusCode || statusCodes.INTERNAL_SERVER_ERROR;
+  error.status = err.status || 'error';
+  error.code = err.code;
+  error.errmsg = err.errmsg;
+
+  if (error.name === 'CastError') {
+    const dbErr = handleCastErrorDB(error);
+    error.message = dbErr.message;
+    error.statusCode = dbErr.statusCode;
+    error.isOperational = true;
+  }
+  if (error.code === 11000) {
+    const dbErr = handleDuplicateFieldsDB(error);
+    error.message = dbErr.message;
+    error.statusCode = dbErr.statusCode;
+    error.isOperational = true;
+  }
+  if (error.name === 'ValidationError') {
+    const dbErr = handleValidationErrorDB(error);
+    error.message = dbErr.message;
+    error.statusCode = dbErr.statusCode;
+    error.isOperational = true;
+  }
+  if (error.name === 'JsonWebTokenError') {
+    const jwtErr = handleJWTError();
+    error.message = jwtErr.message;
+    error.statusCode = jwtErr.statusCode;
+    error.isOperational = true;
+  }
+  if (error.name === 'TokenExpiredError') {
+    const jwtErr = handleJWTExpiredError();
+    error.message = jwtErr.message;
+    error.statusCode = jwtErr.statusCode;
+    error.isOperational = true;
+  }
+
+  // Sync status string with the normalized statusCode
+  error.status = `${error.statusCode}`.startsWith('4') ? 'fail' : 'error';
 
   if (env.NODE_ENV === 'development') {
-    sendErrorDev(err, req, res);
+    sendErrorDev(error, req, res);
   } else {
-    let error = { ...err };
-    error.message = err.message;
-    error.stack = err.stack;
-    error.name = err.name;
-    error.errors = err.errors;
-    error.isOperational = err.isOperational;
-    error.statusCode = err.statusCode;
-    error.code = err.code;
-    error.errmsg = err.errmsg;
-
-    if (error.name === 'CastError') {
-      const dbErr = handleCastErrorDB(error);
-      error.message = dbErr.message;
-      error.statusCode = dbErr.statusCode;
-      error.isOperational = true;
-    }
-    if (error.code === 11000) {
-      const dbErr = handleDuplicateFieldsDB(error);
-      error.message = dbErr.message;
-      error.statusCode = dbErr.statusCode;
-      error.isOperational = true;
-    }
-    if (error.name === 'ValidationError') {
-      const dbErr = handleValidationErrorDB(error);
-      error.message = dbErr.message;
-      error.statusCode = dbErr.statusCode;
-      error.isOperational = true;
-    }
-    if (error.name === 'JsonWebTokenError') {
-      const jwtErr = handleJWTError();
-      error.message = jwtErr.message;
-      error.statusCode = jwtErr.statusCode;
-      error.isOperational = true;
-    }
-    if (error.name === 'TokenExpiredError') {
-      const jwtErr = handleJWTExpiredError();
-      error.message = jwtErr.message;
-      error.statusCode = jwtErr.statusCode;
-      error.isOperational = true;
-    }
-
     sendErrorProd(error, req, res);
   }
 };
