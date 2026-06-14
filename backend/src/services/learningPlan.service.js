@@ -46,9 +46,17 @@ const getOrCreatePlan = async (userId, forceRecreate = false) => {
       }
     });
 
-    // Fallback: if no matches, pick random challenge
-    if (matchedChallengeIds.length === 0 && allChallenges.length > 0) {
-      matchedChallengeIds.push(allChallenges[0]._id);
+    // Fallback: if no matches or not enough matches, fill up to 2 challenges from the available pool
+    if (matchedChallengeIds.length < 2 && allChallenges.length > 0) {
+      let idxOffset = 0;
+      while (matchedChallengeIds.length < 2 && idxOffset < allChallenges.length) {
+        const fallbackIndex = (week.weekNumber - 1 + idxOffset) % allChallenges.length;
+        const fallbackId = allChallenges[fallbackIndex]._id;
+        if (!matchedChallengeIds.includes(fallbackId)) {
+          matchedChallengeIds.push(fallbackId);
+        }
+        idxOffset++;
+      }
     }
 
     weeklyRoadmapFormatted.push({
