@@ -5,10 +5,30 @@ const interviewRepository = require('../repositories/InterviewRepository');
 const geminiService = require('./gemini.service');
 
 const getOrCreatePlan = async (userId, forceRecreate = false) => {
+  const allChallenges = await codingChallengeRepository.findAll({});
+
   // 1. Check existing plan
   const existingPlan = await learningPlanRepository.findByUserId(userId);
   if (existingPlan && !forceRecreate) {
-    return existingPlan;
+    // Self-healing: if the existing plan has only 1 unique challenge but the database has more,
+    // it was generated under the duplicate bug. We auto-regenerate it.
+    const uniquePlanChallenges = new Set();
+    if (existingPlan.weeklyRoadmap) {
+      for (const week of existingPlan.weeklyRoadmap) {
+        if (week.practiceChallenges) {
+          for (const pc of week.practiceChallenges) {
+            const pcId = pc._id ? pc._id.toString() : pc.toString();
+            uniquePlanChallenges.add(pcId);
+          }
+        }
+      }
+    }
+
+    if (uniquePlanChallenges.size <= 1 && allChallenges.length > 1) {
+      console.log(`Auto-healing duplicate challenges in plan for user: ${userId}`);
+    } else {
+      return existingPlan;
+    }
   }
 
   // 2. Gather candidate profile summary for the Gemini prompt
@@ -25,10 +45,6 @@ const getOrCreatePlan = async (userId, forceRecreate = false) => {
 
   // 3. Request roadmap from Gemini
   const aiPlan = await geminiService.generateLearningPlan(summary);
-
-  // 4. Resolve practice challenges by category in Mongoose
-  // Find challenges to link dynamically to study roadmap
-  const allChallenges = await codingChallengeRepository.findAll({});
   
   const weeklyRoadmapFormatted = [];
   
